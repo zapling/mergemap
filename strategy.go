@@ -7,8 +7,14 @@ const (
 	StrategyFirstValue mergeStrategy = "first_value" // Use the first value found
 )
 
-func shouldUpdateValue(dst map[string]interface{}, key string, val interface{}, fieldConfig FieldConfig) bool {
-	switch fieldConfig.Strategy {
+func shouldUpdateValue(dst map[string]interface{}, key string, val interface{}, config map[string]interface{}) bool {
+	strat := StrategyLastValue
+
+	if tmp, ok := config[key].(mergeStrategy); ok {
+		strat = tmp
+	}
+
+	switch strat {
 	case StrategyLastValue:
 		return true // this is the default
 	case StrategyFirstValue:

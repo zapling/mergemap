@@ -10,21 +10,25 @@ func TestShouldUpdateValue(t *testing.T) {
 		dst      string
 		key      string
 		val      string
-		cfg      FieldConfig
+		cfg      map[string]interface{}
 		expected bool
 	}{
 		{
-			dst:      `{"key1": "value1"}`,
-			key:      "key1",
-			val:      "value2",
-			cfg:      FieldConfig{Strategy: StrategyLastValue},
+			dst: `{"key1": "value1"}`,
+			key: "key1",
+			val: "value2",
+			cfg: map[string]interface{}{
+				"key1": StrategyLastValue,
+			},
 			expected: true,
 		},
 		{
-			dst:      `{"key1": "value1"}`,
-			key:      "key1",
-			val:      "value2",
-			cfg:      FieldConfig{Strategy: StrategyFirstValue},
+			dst: `{"key1": "value1"}`,
+			key: "key1",
+			val: "value2",
+			cfg: map[string]interface{}{
+				"key1": StrategyFirstValue,
+			},
 			expected: false,
 		},
 	}
