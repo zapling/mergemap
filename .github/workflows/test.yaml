@@ -1,0 +1,21 @@
+name: Test and lint
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17.0'
+      - name: Install dependencies
+        run: |
+          go version
+          go get -u golang.org/x/lint/golint
+      - name: Run tests
+        run: go test ./...
+      - name: Run vet and lint
+        run: |
+          go vet .
+          golint .
