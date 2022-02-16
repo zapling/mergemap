@@ -11,10 +11,10 @@ var (
 // Merge recursively merges the src and dst maps. Key conflicts are resolved by
 // preferring src, or recursively descending, if both src and dst are maps.
 func Merge(dst, src map[string]interface{}) map[string]interface{} {
-	return merge(dst, src, 0)
+	return merge(dst, src, 0, nil)
 }
 
-func merge(dst, src map[string]interface{}, depth int) map[string]interface{} {
+func merge(dst, src map[string]interface{}, depth int, config Config) map[string]interface{} {
 	if depth > MaxDepth {
 		panic("too deep!")
 	}
@@ -23,10 +23,24 @@ func merge(dst, src map[string]interface{}, depth int) map[string]interface{} {
 			srcMap, srcMapOk := mapify(srcVal)
 			dstMap, dstMapOk := mapify(dstVal)
 			if srcMapOk && dstMapOk {
-				srcVal = merge(dstMap, srcMap, depth+1)
+				srcVal = merge(dstMap, srcMap, depth+1, config)
 			}
 		}
+
+		doUpdate := true
+
+		if config == nil {
+			if _, exists := config[key]; exists {
+				doUpdate = shouldUpdateValue(dst, key, srcVal, config[key])
+			}
+		}
+
+		if !doUpdate {
+			continue
+		}
+
 		dst[key] = srcVal
+
 	}
 	return dst
 }
