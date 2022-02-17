@@ -9,7 +9,7 @@ func TestShouldUpdateValue(t *testing.T) {
 	testCases := []struct {
 		dst      string
 		key      string
-		val      string
+		val      interface{}
 		cfg      map[string]interface{}
 		expected bool
 	}{
@@ -30,6 +30,24 @@ func TestShouldUpdateValue(t *testing.T) {
 				"key1": StrategyFirstValue,
 			},
 			expected: false,
+		},
+		{
+			dst: `{"key1": 1}`,
+			key: "key1",
+			val: 2,
+			cfg: map[string]interface{}{
+				"key1": StrategyMaxValue,
+			},
+			expected: true,
+		},
+		{
+			dst: `{"key1": 2}`,
+			key: "key1",
+			val: 1,
+			cfg: map[string]interface{}{
+				"key1": StrategyMinValue,
+			},
+			expected: true,
 		},
 	}
 
