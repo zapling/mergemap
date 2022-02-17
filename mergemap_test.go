@@ -71,6 +71,99 @@ func TestMerge(t *testing.T) {
 	}
 }
 
+func TestMergeWithConfig(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		src      string
+		dst      string
+		config   map[string]interface{}
+		expected string
+	}{
+		{
+			desc: "Should get the latest value",
+			src:  `{"my-key": "new value"}`,
+			dst:  `{"my-key": "original value"}`,
+			config: map[string]interface{}{
+				"my-key": StrategyLastValue,
+			},
+			expected: `{"my-key": "new value"}`,
+		},
+		{
+			desc: "Should get the first value",
+			src:  `{"my-key": "new value"}`,
+			dst:  `{"my-key": "original value"}`,
+			config: map[string]interface{}{
+				"my-key": StrategyFirstValue,
+			},
+			expected: `{"my-key": "original value"}`,
+		},
+		{
+			desc: "Sub key should get the latest value",
+			src:  `{"my-key": {"my-sub": "new value"}}`,
+			dst:  `{"my-key": {"my-sub": "original value"}}`,
+			config: map[string]interface{}{
+				"my-key": map[string]interface{}{
+					"my-sub": StrategyLastValue,
+				},
+			},
+			expected: `{"my-key": {"my-sub": "new value"}}`,
+		},
+		{
+			desc: "Sub key should get the first value",
+			src:  `{"my-key": {"my-sub": "new value"}}`,
+			dst:  `{"my-key": {"my-sub": "original value"}}`,
+			config: map[string]interface{}{
+				"my-key": map[string]interface{}{
+					"my-sub": StrategyFirstValue,
+				},
+			},
+			expected: `{"my-key": {"my-sub": "original value"}}`,
+		},
+		{
+			desc: "Should get the maximum value",
+			src:  `{"my-key": 10}`,
+			dst:  `{"my-key": 20}`,
+			config: map[string]interface{}{
+				"my-key": StrategyMaxValue,
+			},
+			expected: `{"my-key": 20}`,
+		},
+		{
+			desc: "Should get the minimum value",
+			src:  `{"my-key": 10}`,
+			dst:  `{"my-key": 20}`,
+			config: map[string]interface{}{
+				"my-key": StrategyMinValue,
+			},
+			expected: `{"my-key": 10}`,
+		},
+	}
+
+	for _, testCase := range testCases {
+		var dst map[string]interface{}
+		if err := json.Unmarshal([]byte(testCase.dst), &dst); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		var src map[string]interface{}
+		if err := json.Unmarshal([]byte(testCase.src), &src); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		var expected map[string]interface{}
+		if err := json.Unmarshal([]byte(testCase.expected), &expected); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		got := MergeWithConfig(dst, src, testCase.config)
+		assert(t, expected, got)
+	}
+
+}
+
 func assert(t *testing.T, expected, got map[string]interface{}) {
 	expectedBuf, err := json.Marshal(expected)
 	if err != nil {
