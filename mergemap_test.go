@@ -73,30 +73,34 @@ func TestMerge(t *testing.T) {
 
 func TestMergeWithConfig(t *testing.T) {
 	testCases := []struct {
+		desc     string
 		src      string
 		dst      string
 		config   map[string]interface{}
 		expected string
 	}{
 		{
-			src: `{"my-key": "new value"}`,
-			dst: `{"my-key": "original value"}`,
+			desc: "Should get the latest value",
+			src:  `{"my-key": "new value"}`,
+			dst:  `{"my-key": "original value"}`,
 			config: map[string]interface{}{
 				"my-key": StrategyLastValue,
 			},
 			expected: `{"my-key": "new value"}`,
 		},
 		{
-			src: `{"my-key": "new value"}`,
-			dst: `{"my-key": "original value"}`,
+			desc: "Should get the first value",
+			src:  `{"my-key": "new value"}`,
+			dst:  `{"my-key": "original value"}`,
 			config: map[string]interface{}{
 				"my-key": StrategyFirstValue,
 			},
 			expected: `{"my-key": "original value"}`,
 		},
 		{
-			src: `{"my-key": {"my-sub": "new value"}}`,
-			dst: `{"my-key": {"my-sub": "original value"}}`,
+			desc: "Sub key should get the latest value",
+			src:  `{"my-key": {"my-sub": "new value"}}`,
+			dst:  `{"my-key": {"my-sub": "original value"}}`,
 			config: map[string]interface{}{
 				"my-key": map[string]interface{}{
 					"my-sub": StrategyLastValue,
@@ -105,14 +109,33 @@ func TestMergeWithConfig(t *testing.T) {
 			expected: `{"my-key": {"my-sub": "new value"}}`,
 		},
 		{
-			src: `{"my-key": {"my-sub": "new value"}}`,
-			dst: `{"my-key": {"my-sub": "original value"}}`,
+			desc: "Sub key should get the first value",
+			src:  `{"my-key": {"my-sub": "new value"}}`,
+			dst:  `{"my-key": {"my-sub": "original value"}}`,
 			config: map[string]interface{}{
 				"my-key": map[string]interface{}{
 					"my-sub": StrategyFirstValue,
 				},
 			},
 			expected: `{"my-key": {"my-sub": "original value"}}`,
+		},
+		{
+			desc: "Should get the maximum value",
+			src:  `{"my-key": 10}`,
+			dst:  `{"my-key": 20}`,
+			config: map[string]interface{}{
+				"my-key": StrategyMaxValue,
+			},
+			expected: `{"my-key": 20}`,
+		},
+		{
+			desc: "Should get the minimum value",
+			src:  `{"my-key": 10}`,
+			dst:  `{"my-key": 20}`,
+			config: map[string]interface{}{
+				"my-key": StrategyMinValue,
+			},
+			expected: `{"my-key": 10}`,
 		},
 	}
 
