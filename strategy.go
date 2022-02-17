@@ -1,80 +1,109 @@
 package mergemap
 
-type mergeStrategy string
+type MergeStrategy string
 
 const (
-	StrategyLastValue  mergeStrategy = "last_value"  // Use the last value found
-	StrategyFirstValue mergeStrategy = "first_value" // Use the first value found
+	StrategyLastValue  MergeStrategy = "last_value"
+	StrategyFirstValue MergeStrategy = "first_value"
 
-	StrategyMaxValue mergeStrategy = "max_value"
-	StrategyMinValue mergeStrategy = "min_value"
+	StrategyMaxValue MergeStrategy = "max_value"
+	StrategyMinValue MergeStrategy = "min_value"
 )
 
-func shouldUpdateValue(dst map[string]interface{}, key string, val interface{}, config map[string]interface{}) bool {
-	strat := StrategyLastValue
+type mergeStrategyFunc func(dst map[string]interface{}, key string, value interface{}) bool
 
-	if tmp, ok := config[key].(mergeStrategy); ok {
-		strat = tmp
-	}
+// DefaultMergeStrategies are the default supported merge strategies.
+// If any other behaviour is desiered you could override this variable or extend it.
+var DefaultMergeStrategies = map[MergeStrategy]mergeStrategyFunc{
+	StrategyFirstValue: isTheFirstValue,
+	StrategyLastValue:  isTheLastValue,
+	StrategyMaxValue:   isTheMaximumValue,
+	StrategyMinValue:   isTheMinimumValue,
+}
 
-	switch strat {
-	case StrategyLastValue:
-		return true // this is the default
-	case StrategyFirstValue:
-		if _, alreadySet := dst[key]; alreadySet {
-			return false
-		}
-	case StrategyMaxValue:
-		if curVal, exists := dst[key]; exists {
-			var current float64
-			var newer float64
+// isTheLastValue is the default strategy, the latest value will always override if no other
+// strategy is set
+func isTheLastValue(dst map[string]interface{}, key string, value interface{}) bool {
+	return true
+}
 
-			current, ok := curVal.(float64)
-			if !ok {
-				return false
-			}
-
-			// incoming might be int, in that case we need to convert to float64
-			newer, ok = val.(float64)
-			if !ok {
-				tmp, ok := val.(int)
-				if !ok {
-					// type is neither float64 or int
-					return false
-				}
-
-				newer = float64(tmp)
-			}
-
-			return newer > current
-		}
-
-		return true
-	case StrategyMinValue:
-		if curVal, exists := dst[key]; exists {
-			var current float64
-			var newer float64
-
-			current, ok := curVal.(float64)
-			if !ok {
-				return false
-			}
-
-			// incoming might be int, in that case we need to convert to float64
-			newer, ok = val.(float64)
-			if !ok {
-				tmp, ok := val.(int)
-				if !ok {
-					// type is neither float64 or int
-					return false
-				}
-
-				newer = float64(tmp)
-			}
-
-			return newer < current
-		}
+// isTheFirstValue check whatever the key is already set in the destination map
+func isTheFirstValue(dst map[string]interface{}, key string, val interface{}) bool {
+	if _, alreadySet := dst[key]; alreadySet {
+		return false
 	}
 
 	return true
+}
+
+// isTheMaximumValue checks whatever the value is higher than what is already set
+func isTheMaximumValue(dst map[string]interface{}, key string, value interface{}) bool {
+	if currentValue, alreadySet := dst[key]; alreadySet {
+		var currentValueTyped float64
+		var newValueTyped float64
+
+		currentValueTyped, ok := currentValue.(float64)
+		if !ok {
+			return false
+		}
+
+		newValueTyped, ok = value.(float64)
+		if !ok {
+			// the value could be int, I think
+			tmp, ok := value.(int)
+			if !ok {
+				// not it, we can't recover
+				return false
+			}
+
+			newValueTyped = float64(tmp)
+		}
+
+		return newValueTyped > currentValueTyped
+	}
+
+	return true
+}
+
+// isTheMinimumValue checks whatever the value is lower then what is already set
+func isTheMinimumValue(dst map[string]interface{}, key string, value interface{}) bool {
+	if currentValue, alreadySet := dst[key]; alreadySet {
+		var currentValueTyped float64
+		var newValueTyped float64
+
+		currentValueTyped, ok := currentValue.(float64)
+		if !ok {
+			return false
+		}
+
+		newValueTyped, ok = value.(float64)
+		if !ok {
+			// the value could be int, I think
+			tmp, ok := value.(int)
+			if !ok {
+				// not it, we can't recover
+				return false
+			}
+
+			newValueTyped = float64(tmp)
+		}
+
+		return newValueTyped < currentValueTyped
+	}
+
+	return true
+}
+
+// shouldUpdateValue check if there is any merge strategy set for the current key, and if there is
+// it check the value against that strategy function to determine if the value should be
+// updated or not.
+func shouldUpdateValue(dst map[string]interface{}, key string, val interface{}, config map[string]interface{}) bool {
+	strategy, ok := config[key].(MergeStrategy)
+	if ok {
+		if strategyFunc, exists := DefaultMergeStrategies[strategy]; exists {
+			return strategyFunc(dst, key, val)
+		}
+	}
+
+	return isTheLastValue(dst, key, val)
 }
