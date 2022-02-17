@@ -49,10 +49,8 @@ func isTheMaximumValue(dst map[string]interface{}, key string, value interface{}
 
 		newValueTyped, ok = value.(float64)
 		if !ok {
-			// the value could be int, I think
 			tmp, ok := value.(int)
 			if !ok {
-				// not it, we can't recover
 				return false
 			}
 
@@ -78,10 +76,8 @@ func isTheMinimumValue(dst map[string]interface{}, key string, value interface{}
 
 		newValueTyped, ok = value.(float64)
 		if !ok {
-			// the value could be int, I think
 			tmp, ok := value.(int)
 			if !ok {
-				// not it, we can't recover
 				return false
 			}
 
@@ -92,18 +88,4 @@ func isTheMinimumValue(dst map[string]interface{}, key string, value interface{}
 	}
 
 	return true
-}
-
-// shouldUpdateValue check if there is any merge strategy set for the current key, and if there is
-// it check the value against that strategy function to determine if the value should be
-// updated or not.
-func shouldUpdateValue(dst map[string]interface{}, key string, val interface{}, config map[string]interface{}) bool {
-	strategy, ok := config[key].(MergeStrategy)
-	if ok {
-		if strategyFunc, exists := DefaultMergeStrategies[strategy]; exists {
-			return strategyFunc(dst, key, val)
-		}
-	}
-
-	return isTheLastValue(dst, key, val)
 }

@@ -8,6 +8,10 @@ var (
 	MaxDepth = 32
 )
 
+// MergeWithConfig behaves in the same way as Merge, but allows the caller to
+// supply a config map where a merge strategy can be assigned on a per-key basis.
+// If no config for a key is supplied, the default merge strategy will be used, the latest value
+// will be used.
 func MergeWithConfig(dst, src, config map[string]interface{}) map[string]interface{} {
 	return merge(dst, src, 0, config)
 }
@@ -62,4 +66,15 @@ func mapify(i interface{}) (map[string]interface{}, bool) {
 		return m, true
 	}
 	return map[string]interface{}{}, false
+}
+
+func shouldUpdateValue(dst map[string]interface{}, key string, val interface{}, config map[string]interface{}) bool {
+	strategy, ok := config[key].(MergeStrategy)
+	if ok {
+		if strategyFunc, exists := DefaultMergeStrategies[strategy]; exists {
+			return strategyFunc(dst, key, val)
+		}
+	}
+
+	return isTheLastValue(dst, key, val)
 }
