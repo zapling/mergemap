@@ -48,5 +48,11 @@ fmt.Printf("%v", merged) // map[my-key:first-value]
 There is a few merge strategies already configuerd, but you can easily add or remove ones by modifying the
 `mergemap.DefaultMergeStrategies` map.
 
+The currently supported strategies are:
+- Last value (default)
+- First value
+- Minimum value
+- Maximum value
+
 See the test file for some pretty straightforward examples.
 
